@@ -1,3 +1,7 @@
+# Vercel does NOT work since it decided to take it down. I will find some other way to host.
+
+
+
 <div align="center">
   <img src="public/assets/images/icon.png" alt="Art Class Logo" width="128" />
   <h1>Art Class v4 LTS</h1>
