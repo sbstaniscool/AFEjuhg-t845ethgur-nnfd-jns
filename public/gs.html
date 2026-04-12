@@ -1,78 +1,452 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link
-      rel="shortcut icon"
-      href="./assets/images/icon.png"
-      type="image/png"
-    />
-    <title>Art Class</title>
+<head>
+  <link rel="shortcut icon" href="./assets/images/icon.png" type="image/png" />
+  <title>Art Class</title>
+  <link rel="stylesheet" href="./css/master.css" />
+  <script src="/uv/uv.bundle.js" charset="UTF-8"></script>
+  <script src="/uv/uv.config.js"></script>
+  <script src="./js/preload.js"></script>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js"></script>
 
-    <link rel="stylesheet" href="./css/master.css" />
-    <script src="/uv/uv.bundle.js" charset="UTF-8"></script>
-    <script src="/uv/uv.config.js"></script>
-    <script src="./js/preload.js"></script>
-    <script>
-      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/insights/script.js"></script>
-  </head>
+  <style>
+    /* Loading state */
+    #lumin-status {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1rem;
+      opacity: 0.6;
+    }
 
-  <body theme="main">
-    <nav>
-      <div class="logo">
-        <img src="./assets/images/icon.png" alt="Logo" draggable="false" />
-        <h1>Art Class</h1>
-      </div>
 
-      <p id="time"></p>
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
 
-      <div class="navitems">
-        <div class="navitem"><a href="/">Home</a></div>
-        <div class="navitem"><a selected href="/gs.html">Games</a></div>
-        <div class="navitem"><a href="/apps.html">Apps</a></div>
-        <div class="navitem"><a href="/emulator.html">Emulator</a></div>
-        <div class="navitem"><a href="/search.html">Search</a></div>
-      </div>
-    </nav>
+    /* Fave star button on cards */
+    .card-fave {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 2px;
+      opacity: 0.5;
+      transition: opacity 0.15s, transform 0.15s;
+      z-index: 2;
+    }
+    .card-fave:hover { opacity: 1; transform: scale(1.2); }
+    .card-fave.faved { opacity: 1; }
 
-    <h1>Games</h1>
-    <h1>MOST GAMES ARE BROKEN!! PLEASE SEARCH FOR GAMES</h1>
-    <input
-      type="text"
-      class="input"
-      id="search"
-      placeholder="Search Games"
-      style="text-align: center"
-    />
+    /* Card wrapper needs position:relative for the star */
+    .card { position: relative; }
 
-    <div class="cardgroup" id="favoritedgames"></div>
-    <div class="cardgroup" id="gamecards"></div>
-    <button class="secondary" onclick="clearcustomgames()">
-      Clear custom games
-    </button>
-  </body>
+    /* Section labels */
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    /* Pagination */
+    #pagination {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: center;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+    #pagination button {
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.08);
+      color: inherit;
+      transition: background 0.15s;
+    }
+    #pagination button:hover { background: rgba(255,255,255,0.18); }
+    #pagination button.active { background: rgba(255,255,255,0.28); font-weight: bold; }
+    #pagination button:disabled { opacity: 0.3; cursor: default; }
+    #page-info { opacity: 0.55; font-size: 0.85rem; }
+
+    /* No results */
+    #no-results {
+      display: none;
+      text-align: center;
+      opacity: 0.45;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body theme="main">
+  <nav>
+    <div class="logo">
+      <img src="./assets/images/icon.png" alt="Logo" draggable="false" />
+      <h1>Art Class</h1>
+    </div>
+    <p id="time"></p>
+    <div class="navitems">
+      <div class="navitem"><a href="/">Home</a></div>
+      <div class="navitem"><a selected href="/gs.html">Games</a></div>
+      <div class="navitem"><a href="/apps.html">Apps</a></div>
+      <div class="navitem"><a href="/emulator.html">Emulator</a></div>
+      <div class="navitem"><a href="/search.html">Search</a></div>
+    </div>
+  </nav>
+
+  <h1>Games</h1>
+
+  <input
+    type="text"
+    class="input"
+    id="search"
+    placeholder="Search Games"
+    style="text-align: center"
+  />
+
+  <div id="lumin-status">Loading games...</div>
+  <div id="no-results">No games found for that search.</div>
+
+  <p class="section-label" id="faves-label" style="display:none">⭐ Favourites</p>
+  <div class="cardgroup" id="favoritedgames"></div>
+
+  <p class="section-label" id="games-label" style="display:none"></p>
+  <div class="cardgroup" id="gamecards"></div>
+
+  <div id="pagination"></div>
+
+  <button class="secondary" onclick="clearcustomgames()">Clear custom games</button>
 
   <script src="./js/index.js"></script>
-  <script src="./assets/data/games.js"></script>
-  <script src="./js/games.js"></script>
 
   <script>
-    const searchInput = document.querySelector('#search')
-    const items = document.querySelectorAll('.card')
+    // ─── Constants ────────────────────────────────────────────────────────────
+    const GAMES_PER_PAGE = 40;
+    const FAVES_KEY      = 'lumin_faves';       // localStorage key for favourites
+    const CUSTOM_KEY     = 'customgames';        // same key your old code used
 
-    searchInput.addEventListener('input', function (event) {
-      const query = event.target.value.toLowerCase()
+    // ─── State ────────────────────────────────────────────────────────────────
+    let allGames    = [];   // full game list from Lumin
+    let allImages   = {};   // id -> blob URL cache
+    let filteredGames = []; // current search results (or all games if no query)
+    let currentPage = 1;
+    let isSearching = false;
 
-      items.forEach(function (item) {
-        const title = item.querySelector('.card h4').textContent.toLowerCase()
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
-        if (title.includes(query)) {
-          item.style.display = 'block'
-        } else {
-          item.style.display = 'none'
+    function getFaves() {
+      try { return JSON.parse(localStorage.getItem(FAVES_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveFaves(arr) {
+      localStorage.setItem(FAVES_KEY, JSON.stringify(arr));
+    }
+
+    function toggleFave(id) {
+      let faves = getFaves();
+      if (faves.includes(id)) {
+        faves = faves.filter(f => f !== id);
+      } else {
+        faves.push(id);
+      }
+      saveFaves(faves);
+      renderFaves();
+      // update star state in main grid too
+      document.querySelectorAll(`.card-fave[data-id="${id}"]`).forEach(btn => {
+        btn.textContent = faves.includes(id) ? '★' : '☆';
+        btn.classList.toggle('faved', faves.includes(id));
+      });
+    }
+
+    // ─── Custom games (same logic as before) ─────────────────────────────────
+
+    function clearcustomgames() {
+      localStorage.removeItem(CUSTOM_KEY);
+      location.reload();
+    }
+
+    // ─── Card factory ─────────────────────────────────────────────────────────
+
+    function makeCard(game, imgSrc, isCustom = false) {
+      const faves = getFaves();
+      const isFaved = faves.includes(game.id);
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = game.id;
+
+      const img = document.createElement('img');
+      img.src = imgSrc || '';
+      img.alt = game.name || game.title || '';
+      img.draggable = false;
+      // lazy load images that are still resolving
+      if (!imgSrc) img.style.opacity = '0.3';
+
+      const label = document.createElement('h4');
+      label.textContent = game.name || game.title || '';
+
+      const starBtn = document.createElement('button');
+      starBtn.className = 'card-fave' + (isFaved ? ' faved' : '');
+      starBtn.textContent = isFaved ? '★' : '☆';
+      starBtn.title = isFaved ? 'Unfavourite' : 'Favourite';
+      starBtn.dataset.id = game.id;
+      starBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFave(game.id);
+      });
+
+      card.appendChild(img);
+      card.appendChild(label);
+      card.appendChild(starBtn);
+
+      if (isCustom && game.url) {
+        card.addEventListener('click', () => {
+          // custom games use UV proxy like before — adjust if your loadGame wrapper differs
+          window.location.href = '/search.html?q=' + encodeURIComponent(game.url);
+        });
+      } else {
+        card.addEventListener('click', () => Lumin.loadGame(game.id));
+      }
+
+      return card;
+    }
+
+    // ─── Render favourites strip ──────────────────────────────────────────────
+
+    function renderFaves() {
+      const faves    = getFaves();
+      const favesEl  = document.getElementById('favoritedgames');
+      const labelEl  = document.getElementById('faves-label');
+      favesEl.innerHTML = '';
+
+      if (faves.length === 0) {
+        labelEl.style.display = 'none';
+        return;
+      }
+
+      labelEl.style.display = '';
+      faves.forEach(id => {
+        const game = allGames.find(g => g.id === id);
+        if (!game) return;
+        favesEl.appendChild(makeCard(game, allImages[id]));
+      });
+    }
+
+    // ─── Pagination ───────────────────────────────────────────────────────────
+
+    function renderPagination(total) {
+      const pages    = Math.ceil(total / GAMES_PER_PAGE);
+      const paginEl  = document.getElementById('pagination');
+      paginEl.innerHTML = '';
+
+      if (pages <= 1) return;
+
+      const prev = document.createElement('button');
+      prev.textContent = '← Prev';
+      prev.disabled = currentPage === 1;
+      prev.addEventListener('click', () => { currentPage--; renderCurrentPage(); });
+      paginEl.appendChild(prev);
+
+      // show a sliding window of page buttons
+      const windowSize = 5;
+      let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+      let end   = Math.min(pages, start + windowSize - 1);
+      if (end - start < windowSize - 1) start = Math.max(1, end - windowSize + 1);
+
+      if (start > 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.id = 'page-info';
+        ellipsis.textContent = '…';
+        paginEl.appendChild(ellipsis);
+      }
+
+      for (let i = start; i <= end; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => { currentPage = i; renderCurrentPage(); });
+        paginEl.appendChild(btn);
+      }
+
+      if (end < pages) {
+        const ellipsis = document.createElement('span');
+        ellipsis.id = 'page-info';
+        ellipsis.textContent = '…';
+        paginEl.appendChild(ellipsis);
+      }
+
+      const next = document.createElement('button');
+      next.textContent = 'Next →';
+      next.disabled = currentPage === pages;
+      next.addEventListener('click', () => { currentPage++; renderCurrentPage(); });
+      paginEl.appendChild(next);
+
+      const info = document.createElement('span');
+      info.id = 'page-info';
+      info.textContent = `Page ${currentPage} of ${pages} · ${total} games`;
+      paginEl.appendChild(info);
+    }
+
+    // ─── Render current page of filteredGames ─────────────────────────────────
+
+    function renderCurrentPage() {
+      const container  = document.getElementById('gamecards');
+      const noResults  = document.getElementById('no-results');
+      const gamesLabel = document.getElementById('games-label');
+      container.innerHTML = '';
+
+      if (filteredGames.length === 0) {
+        noResults.style.display = '';
+        gamesLabel.style.display = 'none';
+        renderPagination(0);
+        return;
+      }
+
+      noResults.style.display = 'none';
+      gamesLabel.style.display = '';
+
+      const start = (currentPage - 1) * GAMES_PER_PAGE;
+      const slice = filteredGames.slice(start, start + GAMES_PER_PAGE);
+
+      slice.forEach(game => {
+        // image might still be resolving — show card immediately, update src when ready
+        const card = makeCard(game, allImages[game.id]);
+        container.appendChild(card);
+
+        if (!allImages[game.id]) {
+          Lumin.getImageUrl(game.image_token).then(url => {
+            allImages[game.id] = url;
+            const img = card.querySelector('img');
+            if (img) { img.src = url; img.style.opacity = ''; }
+          }).catch(() => {});
         }
-      })
-    })
+      });
+
+      renderPagination(filteredGames.length);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ─── Search ───────────────────────────────────────────────────────────────
+
+    let searchDebounce;
+    document.getElementById('search').addEventListener('input', (e) => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(async () => {
+        const query = e.target.value.trim().toLowerCase();
+        currentPage = 1;
+
+        if (!query) {
+          filteredGames = [...allGames];
+          isSearching = false;
+          renderCurrentPage();
+          return;
+        }
+
+        isSearching = true;
+
+        // Try Lumin's search first, fall back to client-side filter
+        try {
+          const results = await Lumin.search(query);
+          filteredGames = results || allGames.filter(g =>
+            g.name.toLowerCase().includes(query)
+          );
+        } catch {
+          filteredGames = allGames.filter(g =>
+            g.name.toLowerCase().includes(query)
+          );
+        }
+
+        renderCurrentPage();
+      }, 250);
+    });
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────
+
+    (async () => {
+      const statusEl = document.getElementById('lumin-status');
+
+      try {
+        await Lumin.init({ headless: true });
+
+        // Show skeleton cards while loading
+        const container = document.getElementById('gamecards');
+        for (let i = 0; i < 12; i++) {
+          const skel = document.createElement('div');
+          skel.className = 'card-skeleton';
+          container.appendChild(skel);
+        }
+
+        // Fetch all games (paginate through if needed)
+        let page = 1;
+        let fetched = [];
+        let totalPages = 1;
+
+        do {
+          const result = await Lumin.getGames({ page, limit: 100 });
+          fetched = fetched.concat(result.games);
+          totalPages = result.pages || 1;
+          page++;
+        } while (page <= totalPages && fetched.length < 2000); // safety cap
+
+        allGames = fetched;
+
+        // Append custom games from localStorage (same as before)
+        const customgames = getObj(CUSTOM_KEY);
+        if (customgames) {
+          customgames.forEach(cg => {
+            // tag them so makeCard knows to handle differently
+            allGames.push({ ...cg, _custom: true });
+          });
+        }
+
+        statusEl.style.display = 'none';
+        container.innerHTML = '';
+
+        filteredGames = [...allGames];
+        document.getElementById('games-label').style.display = '';
+
+        renderCurrentPage();
+        renderFaves();
+
+        // Eagerly resolve images for first page only; rest lazy-load on scroll
+        const firstPage = allGames.slice(0, GAMES_PER_PAGE);
+        Promise.all(
+          firstPage
+            .filter(g => g.image_token && !allImages[g.id])
+            .map(async g => {
+              try {
+                allImages[g.id] = await Lumin.getImageUrl(g.image_token);
+                // update any already-rendered cards
+                const img = document.querySelector(`.card[data-id="${g.id}"] img`);
+                if (img) { img.src = allImages[g.id]; img.style.opacity = ''; }
+              } catch {}
+            })
+        );
+
+        console.log(`Loaded ${allGames.length} games from Lumin`);
+        if (customgames) console.log(`Loaded ${customgames.length} custom games`);
+
+      } catch (err) {
+        statusEl.textContent = 'Failed to load games. Try refreshing.';
+        console.error('Lumin init error:', err);
+      }
+
+      Lumin.on('error', (err) => console.error('Lumin error:', err));
+    })();
   </script>
+</body>
 </html>
