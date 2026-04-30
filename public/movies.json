@@ -1,19 +1,9 @@
 {
   "movies": [
     {
-      "name": "A Bug's Life",
+      "name": "A Goofy Movie",
       "image": "abl.jpg",
       "url": "https://drive.google.com/file/d/1ify_EMaQW-ZAn2F0STztn2AGU-jE7aHL/view?t=5.597"
-    },
-    {
-      "name": "Movie Title 2",
-      "image": "assets/movie2.jpg",
-      "url": "movies/movie2/index.html"
-    },
-    {
-      "name": "Inception",
-      "image": "assets/inception.jpg",
-      "url": "https://example.com/inception.mp4"
     }
   ]
 }
