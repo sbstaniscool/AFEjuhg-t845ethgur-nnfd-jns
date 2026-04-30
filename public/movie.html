@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movies</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      color: #e50914;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .movie-card {
+      background: #1f1f1f;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3);
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .movie-info {
+      padding: 15px;
+      text-align: center;
+    }
+
+    .movie-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .play-btn {
+      background: #e50914;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 5px;
+      transition: background 0.3s;
+    }
+
+    .play-btn:hover {
+      background: #f40612;
+    }
+
+    .no-image {
+      background: #333;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 320px;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+      }
+      
+      .movie-card img, .no-image {
+        height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎥 Movies</h1>
+  <div class="grid" id="movieGrid"></div>
+
+  <script>
+    // Load movies from JSON
+    async function loadMovies() {
+      try {
+        const response = await fetch('movies.json');
+        const data = await response.json();
+        const movies = data.movies || [];
+        
+        const grid = document.getElementById('movieGrid');
+        grid.innerHTML = '';
+
+        movies.forEach(movie => {
+          const card = document.createElement('div');
+          card.className = 'movie-card';
+          
+          let imageHTML = '';
+          
+          if (movie.image && movie.image !== "there is none") {
+            imageHTML = `<img src="${movie.image}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+          } else {
+            imageHTML = `<div class="no-image">No Image Available</div>`;
+          }
+
+          card.innerHTML = `
+            ${imageHTML}
+            <div class="movie-info">
+              <h3>${movie.name}</h3>
+              <button class="play-btn" onclick="playMovie('${movie.url}')">▶ Watch Now</button>
+            </div>
+          `;
+          
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading movies:', error);
+        document.getElementById('movieGrid').innerHTML = `
+          <p style="color: red; grid-column: 1 / -1; text-align: center; padding: 50px;">
+            Failed to load movies. Make sure movies.json exists in the same folder.
+          </p>`;
+      }
+    }
+
+    // Function to open movie
+    function playMovie(url) {
+      if (url.startsWith('http') || url.includes('.mp4') || url.includes('.mov')) {
+        window.open(url, '_blank');
+      } else {
+        // For local HTML pages
+        window.location.href = url;
+      }
+    }
+
+    // Load movies when page loads
+    window.onload = loadMovies;
+  </script>
+</body>
+</html>
