@@ -1,9 +1,9 @@
 {
   "movies": [
     {
-      "name": "Movie Title 1",
-      "image": "assets/movie1.jpg",
-      "url": "https://example.com/movie1.mp4"
+      "name": "A Bug's Life",
+      "image": "abl.jpg",
+      "url": "https://drive.google.com/file/d/1ify_EMaQW-ZAn2F0STztn2AGU-jE7aHL/view?t=5.597"
     },
     {
       "name": "Movie Title 2",
