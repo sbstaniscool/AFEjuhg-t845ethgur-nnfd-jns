@@ -3,128 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Movies</title>
+  <title>Movies - Apple</title>
+  
+  <link rel="shortcut icon" href="./assets/images/icon.png" type="image/png" />
+  
+  <!-- Use your movie.css -->
+  <link rel="stylesheet" href="movie.css">
+  
+  <!-- Navbar Styling -->
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    nav {
       background: #0f0f0f;
-      color: #fff;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 2.5rem;
-      color: #e50914;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .movie-card {
-      background: #1f1f1f;
-      border-radius: 8px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    .movie-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3);
-    }
-
-    .movie-card img {
-      width: 100%;
-      height: 320px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .movie-info {
-      padding: 15px;
-      text-align: center;
-    }
-
-    .movie-info h3 {
-      font-size: 1.1rem;
-      margin-bottom: 8px;
-      color: #fff;
-    }
-
-    .play-btn {
-      background: #e50914;
-      color: white;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-top: 5px;
-      transition: background 0.3s;
-    }
-
-    .play-btn:hover {
-      background: #f40612;
-    }
-
-    .no-image {
-      background: #333;
-      color: #aaa;
+      border-bottom: 1px solid #222;
+      padding: 12px 30px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      height: 320px;
-      font-style: italic;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
-      }
-      
-      .movie-card img, .no-image {
-        height: 240px;
-      }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo img {
+      height: 32px;
+      width: auto;
+    }
+
+    .logo h1 {
+      margin: 0;
+      font-size: 1.7rem;
+      color: #fff;
+    }
+
+    #time {
+      color: #888;
+      font-size: 1rem;
+      margin: 0 20px;
+    }
+
+    .navitems {
+      display: flex;
+      gap: 28px;
+    }
+
+    .navitem a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 1.05rem;
+      transition: color 0.2s ease;
+    }
+
+    .navitem a:hover {
+      color: #fff;
+    }
+
+    .navitem a.active {
+      color: #e50914;
+      font-weight: 600;
+    }
+
+    .main-content {
+      padding-top: 40px;
     }
   </style>
 </head>
-<body>
-  <h1>🎥 Movies</h1>
-  <div class="grid" id="movieGrid"></div>
+<body theme="main">
+
+  <!-- Navigation Bar -->
+  <nav>
+    <div class="logo">
+      <img src="./assets/images/icon.png" alt="Logo" draggable="false" />
+      <h1>Apple</h1>
+    </div>
+    
+    <p id="time"></p>
+    
+    <div class="navitems">
+      <div class="navitem"><a href="/">Home</a></div>
+      <div class="navitem"><a href="/gs.html">Games</a></div>
+      <div class="navitem"><a href="/apps.html" class="active">Movies</a></div>
+      <div class="navitem"><a href="/emulator.html">Emulator</a></div>
+      <div class="navitem"><a href="/search.html">Search</a></div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h1>🎥 Movies</h1>
+    <div class="grid" id="movieGrid"></div>
+  </div>
 
   <script>
-    // Load movies from JSON
     async function loadMovies() {
       try {
         const response = await fetch('movies.json');
         const data = await response.json();
         const movies = data.movies || [];
-        
+
         const grid = document.getElementById('movieGrid');
         grid.innerHTML = '';
 
         movies.forEach(movie => {
           const card = document.createElement('div');
           card.className = 'movie-card';
-          
+
           let imageHTML = '';
-          
           if (movie.image && movie.image !== "there is none") {
-            imageHTML = `<img src="${movie.image}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+            imageHTML = `<img src="${movie.image}" alt="${movie.name}" 
+                         onerror="this.style.display='none'; this.parentElement.querySelector('.no-image').style.display='flex';">`;
           } else {
             imageHTML = `<div class="no-image">No Image Available</div>`;
           }
@@ -136,30 +128,53 @@
               <button class="play-btn" onclick="playMovie('${movie.url}')">▶ Watch Now</button>
             </div>
           `;
-          
+
+          // Hidden fallback for broken images
+          if (movie.image && movie.image !== "there is none") {
+            const noImageDiv = document.createElement('div');
+            noImageDiv.className = 'no-image';
+            noImageDiv.style.display = 'none';
+            noImageDiv.textContent = 'No Image Available';
+            card.appendChild(noImageDiv);
+          }
+
           grid.appendChild(card);
         });
       } catch (error) {
         console.error('Error loading movies:', error);
         document.getElementById('movieGrid').innerHTML = `
-          <p style="color: red; grid-column: 1 / -1; text-align: center; padding: 50px;">
-            Failed to load movies. Make sure movies.json exists in the same folder.
+          <p style="color: red; grid-column: 1 / -1; text-align: center; padding: 60px;">
+            Failed to load movies.json
           </p>`;
       }
     }
 
-    // Function to open movie
     function playMovie(url) {
-      if (url.startsWith('http') || url.includes('.mp4') || url.includes('.mov')) {
+      if (!url) return;
+      if (url.startsWith('http') || /\.(mp4|mov|mkv|webm)$/i.test(url)) {
         window.open(url, '_blank');
       } else {
-        // For local HTML pages
         window.location.href = url;
       }
     }
 
-    // Load movies when page loads
-    window.onload = loadMovies;
+    // Live Time
+    function updateTime() {
+      const timeEl = document.getElementById('time');
+      setInterval(() => {
+        const now = new Date();
+        timeEl.textContent = now.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }, 1000);
+    }
+
+    // Initialize
+    window.onload = () => {
+      loadMovies();
+      updateTime();
+    };
   </script>
 </body>
 </html>
