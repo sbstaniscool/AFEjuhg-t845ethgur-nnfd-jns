@@ -1,0 +1,19 @@
+{
+  "movies": [
+    {
+      "name": "Movie Title 1",
+      "image": "assets/movie1.jpg",
+      "url": "https://example.com/movie1.mp4"
+    },
+    {
+      "name": "Movie Title 2",
+      "image": "assets/movie2.jpg",
+      "url": "movies/movie2/index.html"
+    },
+    {
+      "name": "Inception",
+      "image": "assets/inception.jpg",
+      "url": "https://example.com/inception.mp4"
+    }
+  ]
+}
